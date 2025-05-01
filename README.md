@@ -1,36 +1,301 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DEFSU Admin Panel - Kullanım Kılavuzu
 
-## Getting Started
+Bu belge, DEFSU Admin Panel'in nasıl kullanılacağını ve geliştirilecek yeni özelliklerin nasıl entegre edileceğini açıklamaktadır.
 
-First, run the development server:
+## İçindekiler
+
+1. [Kurulum](#kurulum)
+2. [Proje Yapısı](#proje-yapısı)
+3. [Menü Sistemi](#menü-sistemi)
+4. [Window Manager](#window-manager)
+5. [Tema Ayarları](#tema-ayarları)
+6. [Klavye Kısayolları](#klavye-kısayolları)
+7. [Özel Pencere Tipleri](#özel-pencere-tipleri)
+8. [Pencereler Arası Etkileşim](#pencereler-arası-etkileşim)
+
+## Kurulum
 
 ```bash
+# Bağımlılıkları yükleyin
+npm install
+
+# Geliştirme sunucusunu başlatın
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Uygulama http://localhost:3000 adresinde çalışacaktır.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Proje Yapısı
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+/app                  # Next.js App Router
+  /auth               # Kimlik doğrulama sayfaları
+    /login            # Giriş sayfası
+  /dashboard          # Ana dashboard sayfası
+/components           # React bileşenleri
+  /layout             # Layout bileşenleri
+  /ui                 # UI bileşenleri
+  /windows            # Pencere içerikleri
+/hooks                # Custom React hooks
+/lib                  # Yardımcı fonksiyonlar
+/store                # Zustand state yönetimi
+/public               # Statik dosyalar
+```
 
-## Learn More
+## Menü Sistemi
 
-To learn more about Next.js, take a look at the following resources:
+### Menü Öğesi Ekleme
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Menü öğeleri `components/layout/MenuPanel.tsx` dosyasında tanımlanmıştır. Yeni bir menü öğesi eklemek için:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `leftMenuItems` veya `rightMenuItems` dizisine yeni bir öğe ekleyin:
 
-## Deploy on Vercel
+```tsx
+const leftMenuItems: MenuItem[] = [
+  {
+    id: "definitions",
+    title: "Tanımlar",
+    icon: <Database className="h-5 w-5" />,
+    children: [
+      {
+        id: "system-definitions",
+        title: "Sistem",
+        onClick: () => handleOpenWindow("system-definitions", "Sistem Tanımları"),
+        children: [
+          {
+            id: "business-settings",
+            title: "İşletme Ayarları",
+            onClick: () => handleOpenWindow("business-settings", "İşletme Ayarları"),
+          },
+          // Yeni alt menü öğesi buraya eklenebilir
+        ],
+      },
+      // Yeni menü öğesi buraya eklenebilir
+    ],
+  },
+  // Yeni ana menü öğesi buraya eklenebilir
+];
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Menü Öğesine Tıklama İşlemi
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Menü öğesine tıklandığında bir pencere açmak için:
+
+```tsx
+{
+  id: "my-new-menu",
+  title: "Yeni Menü",
+  onClick: () => handleOpenWindow("my-new-menu-id", "Yeni Menü Başlığı"),
+}
+```
+
+## Window Manager
+
+### Yeni Pencere İçeriği Oluşturma
+
+1. `components/windows` klasöründe yeni bir bileşen oluşturun:
+
+```tsx
+// components/windows/MyNewWindow.tsx
+"use client";
+
+export const MyNewWindow = () => {
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Yeni Pencere İçeriği</h2>
+      {/* Pencere içeriği buraya */}
+    </div>
+  );
+};
+```
+
+2. Bu pencereyi `store/windowStore.ts` içinde tanımlayın:
+
+```tsx
+import { MyNewWindow } from "@/components/windows/MyNewWindow";
+
+// windowContents nesnesine ekleyin
+const windowContents = {
+  "my-new-menu-id": <MyNewWindow />,
+  // Diğer pencereler...
+};
+```
+
+### Pencere Olaylarını Dinleme
+
+Pencere kapanmadan önce bir işlem yapmak için:
+
+```tsx
+// components/windows/MyNewWindow.tsx
+"use client";
+
+import { useEffect } from "react";
+import { useWindowStore } from "@/store/windowStore";
+
+export const MyNewWindow = () => {
+  const { registerWindowEvent } = useWindowStore();
+  
+  useEffect(() => {
+    // Pencere kapanmadan önce çalışacak fonksiyon
+    const handleBeforeClose = () => {
+      // Kaydetme işlemi veya kontrol
+      const hasUnsavedChanges = true;
+      
+      if (hasUnsavedChanges) {
+        // Kapatmayı engelle ve kullanıcıya sor
+        return false;
+      }
+      
+      // Kapatmaya izin ver
+      return true;
+    };
+    
+    // Olayı kaydet
+    registerWindowEvent("my-new-menu-id", "beforeClose", handleBeforeClose);
+    
+    return () => {
+      // Component unmount olduğunda olayı temizle
+      unregisterWindowEvent("my-new-menu-id", "beforeClose");
+    };
+  }, []);
+  
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Yeni Pencere İçeriği</h2>
+      {/* Pencere içeriği buraya */}
+    </div>
+  );
+};
+```
+
+## Tema Ayarları
+
+Tema ayarlarını `components/layout/ThemeSettings.tsx` dosyasında bulabilirsiniz. Yeni bir tema eklemek için:
+
+```tsx
+// components/layout/ThemeSettings.tsx
+const themes = [
+  { name: "light", label: "Açık" },
+  { name: "dark", label: "Koyu" },
+  { name: "corporate", label: "Kurumsal" },
+  // Yeni tema buraya eklenebilir
+  { name: "my-new-theme", label: "Yeni Tema" },
+];
+```
+
+## Klavye Kısayolları
+
+Klavye kısayolları `hooks/useKeyboardShortcuts.ts` dosyasında tanımlanmıştır. Yeni bir kısayol eklemek için:
+
+```tsx
+// hooks/useKeyboardShortcuts.ts
+const useKeyboardShortcuts = (windowId: string) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // ESC tuşu ile pencereyi kapat
+      if (e.key === "Escape") {
+        closeWindow(windowId);
+      }
+      
+      // F10 tuşu ile kaydet
+      if (e.key === "F10") {
+        // Kaydetme işlemi
+        console.log("Kaydet");
+      }
+      
+      // Yeni kısayol buraya eklenebilir
+      if (e.key === "F5") {
+        // Yenileme işlemi
+        console.log("Yenile");
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [windowId]);
+};
+```
+
+## Özel Pencere Tipleri
+
+### Alert Penceresi
+
+Alert penceresi oluşturmak için:
+
+```tsx
+import { showAlert } from "@/lib/alert";
+
+showAlert({
+  title: "Dikkat",
+  message: "Kaydedilirken bir sorun oluştu. Tekrar denemek ister misiniz?",
+  buttons: [
+    { label: "Evet", onClick: () => saveData() },
+    { label: "Hayır", onClick: () => closeWindow() },
+  ],
+});
+```
+
+### Input Penceresi
+
+Input penceresi oluşturmak için:
+
+```tsx
+import { showInputDialog } from "@/lib/dialog";
+
+showInputDialog({
+  title: "Fatura No Değiştir",
+  fields: [
+    { name: "invoiceNumber", label: "Yeni Fatura No", type: "text", defaultValue: "" },
+    { name: "invoiceDate", label: "Fatura Tarihi", type: "date", defaultValue: "" },
+  ],
+  onSubmit: (values) => {
+    console.log("Yeni değerler:", values);
+    // İşlem yap
+  },
+});
+```
+
+### Sürüklenebilir Küçük Pencere
+
+Sürüklenebilir küçük pencere oluşturmak için:
+
+```tsx
+import { openDraggableWindow } from "@/lib/draggableWindow";
+
+openDraggableWindow({
+  id: "invoice-list",
+  title: "Fatura Listesi",
+  content: <InvoiceList onSelect={handleInvoiceSelect} />,
+  width: 600,
+  height: 400,
+});
+```
+
+## Pencereler Arası Etkileşim
+
+Pencereler arası veri aktarımı için event sistemi kullanılır:
+
+```tsx
+// Veri gönderen pencere
+import { windowEventBus } from "@/lib/windowEventBus";
+
+const handleInvoiceSelect = (invoice) => {
+  windowEventBus.emit("invoice-selected", invoice);
+  closeDraggableWindow("invoice-list");
+};
+
+// Veri alan pencere
+useEffect(() => {
+  const handleInvoiceSelected = (invoice) => {
+    console.log("Seçilen fatura:", invoice);
+    // Fatura verilerini işle
+  };
+  
+  windowEventBus.on("invoice-selected", handleInvoiceSelected);
+  return () => windowEventBus.off("invoice-selected", handleInvoiceSelected);
+}, []);
+```
+
+---
+
+Daha detaylı bilgi için ilgili dosyaları inceleyebilir veya geliştirici ekibiyle iletişime geçebilirsiniz.

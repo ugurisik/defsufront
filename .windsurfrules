@@ -1,0 +1,41 @@
+Öncelikle benimle Türkçe konuşmalısın.
+Sen react ve next.js'te ustalaşmış bir frontend developersin.
+
+ShaCDN, nextJS ve React yapısında bir sistem.
+
+Yapmak istediğim şey şu; 
+One Page bir admin yönetim paneli oluşturmak istiyorum. Giriş sayfası ve normal sayfa olmalı.
+Sistem UI Tasarımı tamamen modern bir yapıda, shadcn ui kullanarak güzel bir arayüz deneyimi sunabilecek yapıda olmalı
+
+Giriş sayfasında örnek için https://dummyjson.com/auth/login 'e post atacağız. Bilgileri; { "username": "emilys", "password": "emilyspass" } Giriş yaptıktan sonra gelen verilerden accessToken ve refreshToken'i sitede istek atarken kullanacağız.
+Giriş sayfasında kullanıcı adı şifre ve giriş yapılacak dönem yani yıl bilgisi olacak. Kullanıcı bunları seçip giriş yapacak. Sayfa tasarımı modern ve güzel bir yapıda olacak. Ek olarak bir logo olacak.
+
+Yapılan işlemlerde readme.md dosyasına neyi nasıl kullanacağımızı da anlatmanı istiyorum basit bir şekilde. Menüyü x kod sayfasından şu şekilde eklersiniz. Menüye tıklayınca açılacak pencereyi şuradan şu kod yardımı ile ayarlıyorsunuz vs vs gibi altyapıyı nasıl kullanacağımızı anlatan bir doküman olacak.
+
+Giriş yaptıktan sonra normal sayfaya yönlendirecek. Bu sayfada ise sol alta menü butonu olacak. Bu butona tıklayınca açılacak panelde(400px, 400px olabilir) sol kısımda(sol yarısında) menü butonları olacak. Sağ kısımda ise diğer menü butonları olacak. Sol kısım şimdilik birkaç default menü gelebilir. İlerleyen zamanlarda apiye istek atıp menü bilgileri çekeceğiz. Sağ kısım ise her zaman varsayılan seçenek olacak. Kullanıcı ayarları, duyurular, çıkış yap butonu vs olacak. Yani sabit butonlar aslında.
+Sol menümüzdeki menü itemleri hoverable olacak ve iç içe açılabilir bir panele sahip olacak. Örneğin; Tanımlar -> Sistem -> İşletme Ayarları gibi. Tanımlar üzerine gelince bir panel ya da açılır menü açılacak ve sistem vs menüleri gelecek onların üzerlerine tıklayınca da diğer iç menüler gelecek ama bunların hepsi uygun bir şekilde her şeyin üzerinde açılır menü veya popup tarzı bir yapıda olacak. Anlatabilmişimdir umarım.
+
+Bir tane layout manager sistemimiz olacak. Daha doğrusu window manager olarak düşünebiliriz. Menüde bir iteme tıklayınca tab panel gibi bir şey açılacak. Bu tab paneli tam ekrana sığacak şekilde olacak ama menü butonu her zaman üstte olacak bunu unutma. Bir tane window manager olacak, menüde bir iteme tıklayınca ona göre window manager oluşturulup full ekrana sığacak şekilde açılacak. Sadece content kısmı değişecek, yani dinamik bir yapıda olacak. Ama şimdilik menülerin content kısımları boş olabilir. Açılan window managerların üst yani header kısmı olarak düşünebilirsin orada sol kısımda açılan menünün ismi olacak örneğin menüden Sistem Tanımalrını açtık, header sol kısmında Sistem Tanımları yazacak. Sağ kısımda ise close butonu olacak. Close butonuna tıklayınca açılan iç pencere yani window manager kapanacak. Tabi her window manager'ın kapatma eventini vs dinlememiz gerekecek. İlerde x bir content için içeriği kaydetmeden kapatmasını önlemek için şimdiden bunun altyapısı sağlamalıyız.
+Ayrıca Menüden örneğin önce Sistem Tanımları açtık daha sonra Baskı Ayarlarını açtık diyelim. Baskı ayarları üstte gelecek şekilde yine full ekran gösterilecek. Sitenin alt kısmında tab sistemi olacak. Hangi menü açıldıysa ona ait tab eklenecek. Örneğin Sistem Tanımlarını açtık diyelim, alta bir tab eklenecek. Daha sonra Baskı Ayarları açtık alta bir tab daha eklenecek. Alt tablardan hangisine tıklarsak o taba ait window manager aktif olacak ve o kısım gösterilecek. Ayrıca menüde Sistem tanımlarına tıkladık, sonra Baskı ayarlarına tıkladık diyelim. Tekrardan menüden Sistem tanımlarına tıkladığımızda yeni bir window manager açmayacağız, zaten açılmış olan var olduğu için onu aktif hale getireceğiz ve o pencereyi göstereceğiz kullanıcıya. 
+Window Manager'de her pencerenin kendisine özel id'si olmalı. Minimize etme butonu da eklenebilir. 
+
+Ek olarak sağ click menü olacak. Alt kısımda yani alttaki tablara değil alt kısımda tab dışında bir yere tıklayınca sağ click menü açılacak. Bu menü ise kısayol menüsü olacak. Window Manager'da header kısmında close butonunun yanında bir de kısayol butonu olur bu butona tıklayınca kısayol olarak ilgili menü sağ click menüsüne de eklenir bu da çerezde saklanır. 
+Tabların üzerinde sağ click yapınca Kapat ve Göster menüsü olabilir. 
+
+Window Manager'in iç yani content kısmı scrollable olacak. İçerik sığmadığı durumda aşağı doğru scroll yapabilmeliyim.
+
+Genel olarak bir de sitede minik bir header kısmı olabilir. Burada bildirim ikonu, ek kısayollar(rapor kısayolları vs(menüde olmayan contentlere ait kısayolları içerecek)), arama kutusu(menü arama yapılabilir sadece. Sistem tanımları aratıp seçtiğim zaman Sistem Tanımlarına ait window manager açılabilir.)
+
+Ek olarak klavye kısayolları da atanabililir durumda olmalı. Örneğin Sistem Tanımları penceresi açıldığında örnek verecek olursam F10'a tıklandığında kaydet butonunu tetikleyebilmeliyim. ESC tuşları genel olarak Window Manager'ları yani pencereleri kapatmaya yarayabilir.
+
+Menüde Kullanıcı Ayarlarına tıkladığımızda açılan pencerede Tema Ayarları(Koyu - Açık ve Kurumsal Diğer Renkler vs), Bildirim Ayarları vb gibi tasarımsal ayarlar olmalı.
+
+Window Manager yapısına ek olarak 3 pencere yapısı daha istiyorum;
+
+Bunlardan birincisi; Alert Pencereleri, sistemde notify tarzı bir notification yapısı olacak ama bir de Alert tarzı kullanıcı etkileşimi zorunlu olan notification pencereleri olacak. Örneğin, Kaydedilirken Bir Sorun Oluştu, Tekrar Denemek İster Misiniz? Evet-Hayır gibi. 
+Bunlardan ikincisi; input pencereleri olacak. Örneğin listeden bir fatura seçip fatura no değiştir dediğimizde bir tane pencere açılmalı ve orada input type text olacak şekilde bir form tarzı bir şey gelmeli. Ya da fatura tarihi değiştir dediğimizde input type date olacak şekilde form ya da farklı html elementleri vs içeren dinamik formlar açılabilmeli.
+Bunlardan üçüncüsü; Sürüklenebilir, küçük pencereler. Yine window manager tarzında olacak ama ilk açıldığında ekranın ortasında açılacak ve sürüklenebilir bir yapıda küçük pencere olacak. Bu pencere content kısmı da dinamik olacak. Yani örnek veriyorum fatura giriyorum, fatura girerken de şöyle düşündüm "Ben daha önce bu fatura içeriklerini bir önceki faturada girmiştim, oradan direkt aktarayım". Bu yüzden bir tane buton eklerim faturadan aktar diye. Bu butona basınca dediğim sürüklenebilir küçük pencere açılır ve o pencerede fatura listesi gelir. Orada istediğim faturayı seçip aktar derim ve aktarır. Yani aslında window manager'in küçük ve sürüklenebilir hali diyebiliriz. 
+
+Ek olarak; pencereler arasında etkileşim de sağlanabilmeli. Bu çok önemli bir detay. Ben Fatura Giriş penceresini açtığımda oradan bir butona tıklayınca örneğin Sistem Tanımları penceresi açılıp oradan ilgili bir yeri işaretletebilmeliyim. Örneğin Fatura sayfasında kar oranını göster butonuna tıkladığımda beni Sistem Tanımları penceresi içerisinden Kar Oranları alanına yönlendirmeli.(Yönlendirme elzem değil, olmayadabilir.) Ama normal Window Manager ile Sürüklenebilir Küçük Window Manager arasında kesinlikle etkileşim olmalı. Fatura aktar sayfasında geçmiş faturadan aktar dediğimde açılan küçük fatura listesi penceresinde eski bir faturayı seçip aktar dediğimde hangi faturayı seçtiğimi Fatura sayfası yani fatura penceresi bilebilmeli.
+
+Sistemde içerik olarak bazı şeyleri çerezde saklanabilmesi gerekiyor. Bu pencere contentinin tamamı da olabilir, bu content kısmında belirli bir componentte olabilir. Yani bunlara atanan veriler çerezde saklanabilmeli. Örneğin bir tabloda bir satır seçtiğimde, sayfayı kapatıp açtığımda ve tekrar o pencereyi açtığımda daha önce seçmiş olduğum satır varsa o tekrar seçili olarak gelmeli. Ayrıca örneğin tablolarda Sütun Gizleme, Sütun Sıralaması vs çerezde tutulabilir. Ben bir tabloyu sadeleştirdiysem o tablo her açıldığında sade olarak gelmeli. Yani dinamik bir çerez tutma sistemi olmalı. Klasik şeyler de çerezde tutulmalı zaten, tema ayarları vs vs.
