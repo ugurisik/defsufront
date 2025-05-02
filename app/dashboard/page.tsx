@@ -9,6 +9,7 @@ import { MenuButton } from "@/components/layout/MenuButton";
 import { Header } from "@/components/layout/Header";
 import { TabSystem } from "@/components/window-manager/TabSystem";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ModalContainer } from "@/components/modal/ModalContainer";
 
 // Tip tanımı - User için interface yerine tipini belirtelim
 type UserData = {
@@ -72,6 +73,9 @@ export default function DashboardPage() {
         <main className="flex-1 h-[calc(100vh-150px)]">
           {/* Window Manager */}
           <WindowManager />
+          
+          {/* Modal Container - Sürüklenebilir Pencereler */}
+          <ModalContainer />
         </main>
         
         {/* Bottom Section - fixed 75px height */}

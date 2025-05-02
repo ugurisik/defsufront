@@ -6,9 +6,11 @@ import {
   Settings, 
   FileText, 
   Database, 
-  Printer 
+  Printer,
+  LayoutGrid
 } from "lucide-react";
 import { UserSettingsWindow } from '@/components/windows/UserSettingsWindow';
+import { TestModals } from '@/components/modal/examples/TestModals';
 
 // Menü öğelerini tanımlayan tip
 export interface MenuItem {
@@ -23,6 +25,13 @@ export interface MenuItem {
 
 // Sol menü öğelerini tanımlıyoruz
 export const leftMenuItems: MenuItem[] = [
+  {
+    id: 'test-modals',
+    title: 'Modal Test',
+    icon: <LayoutGrid className="h-5 w-5" />,
+    keywords: ['modal', 'test', 'pencere', 'sürüklenebilir'],
+    component: TestModals
+  },
   {
     id: 'definitions',
     title: 'Tanımlar',

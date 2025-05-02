@@ -15,6 +15,7 @@ Bu belge, DEFSU Admin Panel'in nasıl kullanılacağını ve geliştirilecek yen
 9. [Klavye Kısayolları](#klavye-kısayolları)
 10. [Sağ Tık Menüsü](#sağ-tık-menüsü)
 11. [Header Bileşeni](#header-bileşeni)
+12. [Sürüklenebilir Modal Sistemi](#sürüklenebilir-modal-sistemi)
 
 ## Kurulum
 
@@ -363,7 +364,112 @@ import {
 
 ## Header Bileşeni
 
-Header bileşeni, `components/layout/Header.tsx` dosyasında tanımlanmıştır. Bu bileşen, üst kısımda yer alır ve aşağıdaki özellikleri içerir:
+Header bileşeni, `components/layout/Header.tsx` dosyasında tanımlanmıştır.
+
+## Sürüklenebilir Modal Sistemi
+
+Sürüklenebilir modal sistemi, kullanıcıların ekran üzerinde sürükleyebileceği, boyutlandırabileceği ve veri alışverişi yapabileceği modal pencereler oluşturmanızı sağlar. Bu sistem `components/modal` klasöründe ve `store/modalStore.ts` dosyasında tanımlanmıştır.
+
+### Modal Store Kullanımı
+
+Modal pencereleri yönetmek için `useModalStore` hook'unu kullanın:
+
+```tsx
+import { useModalStore } from "@/store/modalStore";
+
+const { openModal, closeModal, updateModalPosition, updateModalSize } = useModalStore();
+```
+
+### Modal Açma
+
+Bir modal açmak için `openModal` fonksiyonunu kullanın:
+
+```tsx
+openModal({
+  id: "unique-modal-id", // Benzersiz bir ID
+  component: ModalBileşeni, // Modal içeriği olarak kullanılacak bileşen
+  props: { // Bileşene geçirilecek props'lar
+    title: "Modal Başlığı",
+    data: { /* veri */ },
+    // Diğer props'lar...
+  },
+  isResizable: true, // Boyutlandırılabilir mi?
+  position: { x: 100, y: 100 }, // Başlangıç pozisyonu
+  size: { width: 600, height: 400 }, // Başlangıç boyutu
+  onClose: (result) => {
+    // Modal kapandığında çalışacak callback
+    // result: Modal'dan dönen veri (varsa)
+    console.log("Modal kapandı, sonuç:", result);
+  }
+});
+```
+
+### Modal Bileşeni Oluşturma
+
+Modal içeriği olarak kullanılacak bir bileşen oluşturmak için:
+
+```tsx
+// components/modal/examples/CustomModal.tsx
+"use client";
+
+interface CustomModalProps {
+  title?: string;
+  data?: any;
+  onClose: (result?: any) => void; // Modal'ı kapatmak ve veri döndürmek için
+}
+
+export const CustomModal = ({ title = "Modal", data, onClose }: CustomModalProps) => {
+  // Modal içeriği...
+  
+  // Veri ile kapatma
+  const handleSubmit = () => {
+    const result = { /* işlenmiş veri */ };
+    onClose(result); // Veriyi döndürerek kapat
+  };
+  
+  // İptal ile kapatma
+  const handleCancel = () => {
+    onClose(); // Veri döndürmeden kapat
+  };
+  
+  return (
+    <div className="p-4">
+      {/* Modal içeriği */}
+      <div className="mt-4 flex justify-end space-x-2">
+        <button onClick={handleCancel}>İptal</button>
+        <button onClick={handleSubmit}>Kaydet</button>
+      </div>
+    </div>
+  );
+};
+```
+
+### Modal Sistemini Dashboard'a Ekleme
+
+Modal sistemini kullanmak için `ModalContainer` bileşenini dashboard sayfasına ekleyin:
+
+```tsx
+// app/dashboard/page.tsx
+import { ModalContainer } from "@/components/modal/ModalContainer";
+
+export default function DashboardPage() {
+  return (
+    <div>
+      {/* ... diğer içerikler ... */}
+      <ModalContainer />
+    </div>
+  );
+}
+```
+
+### Örnek Modal Kullanımları
+
+Sistemde iki örnek modal bulunmaktadır:
+
+1. **InvoiceSelectModal**: Geçmiş faturalardan veri seçip aktarmak için.
+2. **RevenueProcessModal**: Gelir verilerini işlemek ve kaydetmek için.
+
+Bu örnekleri `components/modal/examples/TestModals.tsx` bileşeni üzerinden test edebilirsiniz. Menüden "Modal Test" seçeneğine tıklayarak bu test sayfasına erişebilirsiniz. Bu bileşen, üst kısımda yer alır ve aşağıdaki özellikleri içerir:
 
 - Uygulama başlığı
 - Arama kutusu
