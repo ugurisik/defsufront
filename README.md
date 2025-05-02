@@ -6,12 +6,15 @@ Bu belge, DEFSU Admin Panel'in nasıl kullanılacağını ve geliştirilecek yen
 
 1. [Kurulum](#kurulum)
 2. [Proje Yapısı](#proje-yapısı)
-3. [Menü Sistemi](#menü-sistemi)
-4. [Window Manager](#window-manager)
-5. [Tema Ayarları](#tema-ayarları)
-6. [Klavye Kısayolları](#klavye-kısayolları)
-7. [Özel Pencere Tipleri](#özel-pencere-tipleri)
-8. [Pencereler Arası Etkileşim](#pencereler-arası-etkileşim)
+3. [Giriş Sayfası](#giriş-sayfası)
+4. [Menü Sistemi](#menü-sistemi)
+5. [Window Manager](#window-manager)
+6. [Tab Sistemi](#tab-sistemi)
+7. [Tema Ayarları](#tema-ayarları)
+8. [Kısayollar](#kısayollar)
+9. [Klavye Kısayolları](#klavye-kısayolları)
+10. [Sağ Tık Menüsü](#sağ-tık-menüsü)
+11. [Header Bileşeni](#header-bileşeni)
 
 ## Kurulum
 
@@ -20,7 +23,7 @@ Bu belge, DEFSU Admin Panel'in nasıl kullanılacağını ve geliştirilecek yen
 npm install
 
 # Geliştirme sunucusunu başlatın
-npm run dev
+npm run dev --turbopack
 ```
 
 Uygulama http://localhost:3000 adresinde çalışacaktır.
@@ -28,274 +31,364 @@ Uygulama http://localhost:3000 adresinde çalışacaktır.
 ## Proje Yapısı
 
 ```
-/app                  # Next.js App Router
-  /auth               # Kimlik doğrulama sayfaları
-    /login            # Giriş sayfası
-  /dashboard          # Ana dashboard sayfası
-/components           # React bileşenleri
-  /layout             # Layout bileşenleri
-  /ui                 # UI bileşenleri
-  /windows            # Pencere içerikleri
-/hooks                # Custom React hooks
-/lib                  # Yardımcı fonksiyonlar
-/store                # Zustand state yönetimi
-/public               # Statik dosyalar
+/app                    # Next.js App Router
+  /auth                 # Kimlik doğrulama sayfaları
+    /login              # Giriş sayfası
+  /dashboard            # Ana dashboard sayfası
+/components             # React bileşenleri
+  /layout               # Layout bileşenleri (Header, MenuButton, MenuPanel)
+  /theme                # Tema bileşenleri (ThemeProvider)
+  /ui                   # ShadCN UI bileşenleri
+  /window-manager       # Pencere yönetim bileşenleri (WindowManager, WindowHeader, TabSystem)
+  /windows              # Pencere içerikleri (UserSettingsWindow vb.)
+/config                 # Yapılandırma dosyaları (menuConfig)
+/store                  # Zustand state yönetimi (windowStore, themeStore, shortcutStore)
+/public                 # Statik dosyalar
+```
+
+## Giriş Sayfası
+
+Giriş sayfası `/app/auth/login/page.tsx` dosyasında bulunmaktadır. Bu sayfa, kullanıcının sisteme giriş yapmasını sağlar.
+
+### Giriş İşlemi
+
+Giriş işlemi için DummyJSON API kullanılmaktadır:
+
+```tsx
+// Örnek giriş işlemi
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  const response = await fetch("https://dummyjson.com/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: "emilys",
+      password: "emilyspass"
+    }),
+  });
+
+  const data = await response.json();
+  
+  // Token'ları sakla
+  localStorage.setItem("accessToken", data.accessToken);
+  localStorage.setItem("refreshToken", data.refreshToken);
+  
+  // Kullanıcı bilgilerini sakla
+  localStorage.setItem("user", JSON.stringify({
+    id: data.id,
+    username: data.username,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    year: formData.year
+  }));
+  
+  // Dashboard'a yönlendir
+  router.push("/dashboard");
+};
 ```
 
 ## Menü Sistemi
 
-### Menü Öğesi Ekleme
+Menü sistemi, `components/layout/MenuPanel.tsx` ve `config/menuConfig.tsx` dosyalarında tanımlanmıştır.
 
-Menü öğeleri `components/layout/MenuPanel.tsx` dosyasında tanımlanmıştır. Yeni bir menü öğesi eklemek için:
+### Menü Yapılandırması
 
-1. `leftMenuItems` veya `rightMenuItems` dizisine yeni bir öğe ekleyin:
+Menü öğeleri `config/menuConfig.tsx` dosyasında tanımlanır:
 
 ```tsx
-const leftMenuItems: MenuItem[] = [
+// Menü öğelerini tanımlayan tip
+export interface MenuItem {
+  id: string;
+  title: string;
+  icon?: React.ReactNode;
+  componentName?: string;
+  component?: React.ComponentType<any>;
+  keywords?: string[]; // Arama için ek anahtar kelimeler
+  children?: MenuItem[];
+}
+
+// Sol menü öğeleri
+export const leftMenuItems: MenuItem[] = [
   {
-    id: "definitions",
-    title: "Tanımlar",
+    id: 'definitions',
+    title: 'Tanımlar',
     icon: <Database className="h-5 w-5" />,
     children: [
-      {
-        id: "system-definitions",
-        title: "Sistem",
-        onClick: () => handleOpenWindow("system-definitions", "Sistem Tanımları"),
-        children: [
-          {
-            id: "business-settings",
-            title: "İşletme Ayarları",
-            onClick: () => handleOpenWindow("business-settings", "İşletme Ayarları"),
-          },
-          // Yeni alt menü öğesi buraya eklenebilir
-        ],
-      },
-      // Yeni menü öğesi buraya eklenebilir
-    ],
-  },
-  // Yeni ana menü öğesi buraya eklenebilir
+      // Alt menü öğeleri
+    ]
+  }
+];
+
+// Sağ menü öğeleri
+export const rightMenuItems: MenuItem[] = [
+  // Sağ menü öğeleri
 ];
 ```
 
-### Menü Öğesine Tıklama İşlemi
+### Yeni Menü Öğesi Ekleme
 
-Menü öğesine tıklandığında bir pencere açmak için:
+Yeni bir menü öğesi eklemek için `config/menuConfig.tsx` dosyasında ilgili diziye ekleme yapın:
 
 ```tsx
-{
-  id: "my-new-menu",
-  title: "Yeni Menü",
-  onClick: () => handleOpenWindow("my-new-menu-id", "Yeni Menü Başlığı"),
-}
+// Sol menüye yeni bir öğe eklemek
+export const leftMenuItems: MenuItem[] = [
+  // Mevcut öğeler...
+  {
+    id: 'new-menu',
+    title: 'Yeni Menü',
+    icon: <Icon className="h-5 w-5" />,
+    children: [
+      {
+        id: 'new-submenu',
+        title: 'Yeni Alt Menü',
+        component: YeniPencereBileşeni
+      }
+    ]
+  }
+];
 ```
 
 ## Window Manager
+
+Window Manager sistemi, `components/window-manager/WindowManager.tsx` ve `store/windowStore.ts` dosyalarında tanımlanmıştır.
+
+### Pencere Açma
+
+Bir pencere açmak için `useWindowStore` hook'unu kullanın:
+
+```tsx
+import { useWindowStore } from "@/store/windowStore";
+
+const { openWindow } = useWindowStore();
+
+// Pencere açma
+openWindow({
+  id: "unique-id",
+  title: "Pencere Başlığı",
+  content: <PencereİçeriğiBileşeni />
+});
+```
 
 ### Yeni Pencere İçeriği Oluşturma
 
 1. `components/windows` klasöründe yeni bir bileşen oluşturun:
 
 ```tsx
-// components/windows/MyNewWindow.tsx
+// components/windows/YeniPencere.tsx
 "use client";
 
-export const MyNewWindow = () => {
+export const YeniPencere = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Yeni Pencere İçeriği</h2>
-      {/* Pencere içeriği buraya */}
+      {/* Pencere içeriği */}
     </div>
   );
 };
 ```
 
-2. Bu pencereyi `store/windowStore.ts` içinde tanımlayın:
+2. Bu bileşeni menü yapılandırmasına ekleyin:
 
 ```tsx
-import { MyNewWindow } from "@/components/windows/MyNewWindow";
+// config/menuConfig.tsx
+import { YeniPencere } from "@/components/windows/YeniPencere";
 
-// windowContents nesnesine ekleyin
-const windowContents = {
-  "my-new-menu-id": <MyNewWindow />,
-  // Diğer pencereler...
-};
+export const leftMenuItems: MenuItem[] = [
+  // ...
+  {
+    id: 'new-menu-item',
+    title: 'Yeni Menü Öğesi',
+    component: YeniPencere
+  }
+];
 ```
 
-### Pencere Olaylarını Dinleme
+## Tab Sistemi
 
-Pencere kapanmadan önce bir işlem yapmak için:
+Tab sistemi, `components/window-manager/TabSystem.tsx` dosyasında tanımlanmıştır. Bu sistem, açık pencereleri alt kısımda sekmeler halinde gösterir.
+
+### Tab Özellikleri
+
+- Aktif sekme vurgulanır
+- Sekmeye tıklayarak ilgili pencereyi aktif hale getirebilirsiniz
+- Aktif sekmeye tıklayarak pencereyi simge durumuna küçültebilirsiniz
+- Sekme üzerinde sağ tıklayarak bir bağlam menüsü açabilirsiniz
+- Orta tıklama ile sekmeyi kapatabilirsiniz
+- Shift+Sağ/Sol ok tuşları ile sekmeler arasında geçiş yapabilirsiniz
 
 ```tsx
-// components/windows/MyNewWindow.tsx
-"use client";
-
-import { useEffect } from "react";
-import { useWindowStore } from "@/store/windowStore";
-
-export const MyNewWindow = () => {
-  const { registerWindowEvent } = useWindowStore();
-  
-  useEffect(() => {
-    // Pencere kapanmadan önce çalışacak fonksiyon
-    const handleBeforeClose = () => {
-      // Kaydetme işlemi veya kontrol
-      const hasUnsavedChanges = true;
-      
-      if (hasUnsavedChanges) {
-        // Kapatmayı engelle ve kullanıcıya sor
-        return false;
-      }
-      
-      // Kapatmaya izin ver
-      return true;
-    };
-    
-    // Olayı kaydet
-    registerWindowEvent("my-new-menu-id", "beforeClose", handleBeforeClose);
-    
-    return () => {
-      // Component unmount olduğunda olayı temizle
-      unregisterWindowEvent("my-new-menu-id", "beforeClose");
-    };
-  }, []);
-  
-  return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Yeni Pencere İçeriği</h2>
-      {/* Pencere içeriği buraya */}
-    </div>
-  );
-};
+// Sekme üzerinde sağ tık menüsü
+<ContextMenuContent>
+  <ContextMenuItem onClick={() => setActiveWindow(window.id)}>
+    Göster
+  </ContextMenuItem>
+  <ContextMenuItem onClick={() => closeWindow(window.id)}>
+    Kapat
+  </ContextMenuItem>
+  <ContextMenuItem onClick={() => minimizeWindow(window.id)}>
+    Simge Durumuna Küçült
+  </ContextMenuItem>
+</ContextMenuContent>
 ```
 
 ## Tema Ayarları
 
-Tema ayarlarını `components/layout/ThemeSettings.tsx` dosyasında bulabilirsiniz. Yeni bir tema eklemek için:
+Tema sistemi, `components/theme/ThemeProvider.tsx` ve `store/themeStore.ts` dosyalarında tanımlanmıştır.
+
+### Mevcut Temalar
+
+Sistem şu anda aşağıdaki temaları desteklemektedir:
+
+- Indigo Frost
+- Zümrüt Esinti
+- Yakut Zarafeti
+- Amber Altın
+- Mor Rüya
+- Okyanus Derinliği
+- Orman Gölgesi
+- Gül Yaprağı
+
+### Tema Değiştirme
+
+Tema değiştirmek için `useTheme` hook'unu kullanın:
 
 ```tsx
-// components/layout/ThemeSettings.tsx
-const themes = [
-  { name: "light", label: "Açık" },
-  { name: "dark", label: "Koyu" },
-  { name: "corporate", label: "Kurumsal" },
-  // Yeni tema buraya eklenebilir
-  { name: "my-new-theme", label: "Yeni Tema" },
+import { useTheme } from "@/components/theme/ThemeProvider";
+
+const { setPaletteById, availablePalettes } = useTheme();
+
+// Tema değiştirme
+setPaletteById("theme-id");
+```
+
+### Yeni Tema Ekleme
+
+Yeni bir tema eklemek için `store/themeStore.ts` dosyasına ekleyin:
+
+```tsx
+// store/themeStore.ts
+const themePalettes: ThemePalette[] = [
+  // Mevcut temalar...
+  {
+    id: 'new-theme',
+    name: 'Yeni Tema',
+    colors: {
+      primary: '#hex-color',
+      primary_foreground: '#hex-color',
+      // Diğer renkler...
+    }
+  }
 ];
+```
+
+## Kısayollar
+
+Kısayol sistemi, `store/shortcutStore.ts` dosyasında tanımlanmıştır. Bu sistem, sık kullanılan pencerelere hızlı erişim sağlar.
+
+### Kısayol Ekleme/Kaldırma
+
+Kısayol eklemek veya kaldırmak için `useShortcutStore` hook'unu kullanın:
+
+```tsx
+import { useShortcutStore } from "@/store/shortcutStore";
+
+const { toggleShortcut, hasShortcut } = useShortcutStore();
+
+// Kısayol ekle/kaldır
+toggleShortcut({
+  id: "window-id",
+  title: "Pencere Başlığı"
+});
+
+// Kısayol var mı kontrol et
+const isShortcut = hasShortcut("window-id");
 ```
 
 ## Klavye Kısayolları
 
-Klavye kısayolları `hooks/useKeyboardShortcuts.ts` dosyasında tanımlanmıştır. Yeni bir kısayol eklemek için:
+Sistem şu klavye kısayollarını destekler:
+
+- **End**: Aktif pencereyi kapatır
+- **Shift + Sağ/Sol Ok**: Sekmeler arasında geçiş yapar
+- **ESC**: Pencereyi kapatır (özelleştirilebilir)
+
+Klavye kısayolları `components/window-manager/WindowManager.tsx` ve `components/window-manager/TabSystem.tsx` dosyalarında tanımlanmıştır.
+
+### Özel Klavye Kısayolları Ekleme
+
+Özel klavye kısayolları eklemek için:
 
 ```tsx
-// hooks/useKeyboardShortcuts.ts
-const useKeyboardShortcuts = (windowId: string) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // ESC tuşu ile pencereyi kapat
-      if (e.key === "Escape") {
-        closeWindow(windowId);
-      }
-      
-      // F10 tuşu ile kaydet
-      if (e.key === "F10") {
-        // Kaydetme işlemi
-        console.log("Kaydet");
-      }
-      
-      // Yeni kısayol buraya eklenebilir
-      if (e.key === "F5") {
-        // Yenileme işlemi
-        console.log("Yenile");
-      }
-    };
-    
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [windowId]);
-};
-```
-
-## Özel Pencere Tipleri
-
-### Alert Penceresi
-
-Alert penceresi oluşturmak için:
-
-```tsx
-import { showAlert } from "@/lib/alert";
-
-showAlert({
-  title: "Dikkat",
-  message: "Kaydedilirken bir sorun oluştu. Tekrar denemek ister misiniz?",
-  buttons: [
-    { label: "Evet", onClick: () => saveData() },
-    { label: "Hayır", onClick: () => closeWindow() },
-  ],
-});
-```
-
-### Input Penceresi
-
-Input penceresi oluşturmak için:
-
-```tsx
-import { showInputDialog } from "@/lib/dialog";
-
-showInputDialog({
-  title: "Fatura No Değiştir",
-  fields: [
-    { name: "invoiceNumber", label: "Yeni Fatura No", type: "text", defaultValue: "" },
-    { name: "invoiceDate", label: "Fatura Tarihi", type: "date", defaultValue: "" },
-  ],
-  onSubmit: (values) => {
-    console.log("Yeni değerler:", values);
-    // İşlem yap
-  },
-});
-```
-
-### Sürüklenebilir Küçük Pencere
-
-Sürüklenebilir küçük pencere oluşturmak için:
-
-```tsx
-import { openDraggableWindow } from "@/lib/draggableWindow";
-
-openDraggableWindow({
-  id: "invoice-list",
-  title: "Fatura Listesi",
-  content: <InvoiceList onSelect={handleInvoiceSelect} />,
-  width: 600,
-  height: 400,
-});
-```
-
-## Pencereler Arası Etkileşim
-
-Pencereler arası veri aktarımı için event sistemi kullanılır:
-
-```tsx
-// Veri gönderen pencere
-import { windowEventBus } from "@/lib/windowEventBus";
-
-const handleInvoiceSelect = (invoice) => {
-  windowEventBus.emit("invoice-selected", invoice);
-  closeDraggableWindow("invoice-list");
-};
-
-// Veri alan pencere
 useEffect(() => {
-  const handleInvoiceSelected = (invoice) => {
-    console.log("Seçilen fatura:", invoice);
-    // Fatura verilerini işle
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // F10 tuşu ile kaydet
+    if (event.key === "F10") {
+      // Kaydetme işlemi
+    }
   };
   
-  windowEventBus.on("invoice-selected", handleInvoiceSelected);
-  return () => windowEventBus.off("invoice-selected", handleInvoiceSelected);
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
 }, []);
 ```
 
----
+## Sağ Tık Menüsü
 
-Daha detaylı bilgi için ilgili dosyaları inceleyebilir veya geliştirici ekibiyle iletişime geçebilirsiniz.
+Tab sistemi ve diğer bileşenler üzerinde sağ tık menüleri bulunmaktadır. Bu menüler, `@radix-ui/react-context-menu` bileşeni kullanılarak oluşturulmuştur.
+
+### Özel Sağ Tık Menüsü Ekleme
+
+Özel bir sağ tık menüsü eklemek için:
+
+```tsx
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+
+<ContextMenu>
+  <ContextMenuTrigger>
+    <div>Sağ tıklanabilir öğe</div>
+  </ContextMenuTrigger>
+  <ContextMenuContent>
+    <ContextMenuItem onClick={handleAction}>
+      Menü Öğesi
+    </ContextMenuItem>
+  </ContextMenuContent>
+</ContextMenu>
+```
+
+## Header Bileşeni
+
+Header bileşeni, `components/layout/Header.tsx` dosyasında tanımlanmıştır. Bu bileşen, üst kısımda yer alır ve aşağıdaki özellikleri içerir:
+
+- Uygulama başlığı
+- Arama kutusu
+- Bildirim ikonu
+- Kullanıcı menüsü
+- Oturum süresi göstergesi
+
+### Arama Özelliği
+
+Header'daki arama kutusu, menü öğelerini aramak için kullanılır:
+
+```tsx
+// Arama işlevi
+const handleSearch = (query: string) => {
+  if (query.trim() === "") {
+    setSearchResults([]);
+    setShowSearchResults(false);
+    return;
+  }
+  
+  // Menü öğelerini ara
+  const results = searchMenuItems(query);
+  
+  // Sonuçları göster
+  setSearchResults(results);
+  setShowSearchResults(true);
+};
+```

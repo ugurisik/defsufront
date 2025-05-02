@@ -34,7 +34,6 @@ export default function DashboardPage() {
       router.push("/auth/login");
       return;
     }
-
     try {
       const userData = JSON.parse(userStr) as UserData;
       setUser(userData);

@@ -60,6 +60,10 @@ export const UserSettingsWindow = ({ onClose }: UserSettingsWindowProps) => {
     toast.success("Tema ayarları kaydedildi");
   };
 
+  const test = () => {
+    console.log("test");
+  };
+
   return (
     <div className="w-full h-full overflow-auto p-6">
       <Tabs defaultValue="theme" className="w-full">
@@ -76,6 +80,7 @@ export const UserSettingsWindow = ({ onClose }: UserSettingsWindowProps) => {
               <CardTitle>Renk Paleti</CardTitle>
               <CardDescription>
                 Uygulamanın renk paletini değiştirin. \n asd asd a
+                <Button onClick={test} variant="outline">Renk Paleti</Button>
               </CardDescription>
             </CardHeader>
             <CardContent>
