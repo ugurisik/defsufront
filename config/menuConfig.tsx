@@ -152,7 +152,6 @@ const findItemInMenuArray = (items: MenuItem[], id: string): MenuItem | undefine
   return undefined;
 };
 
-// Arama sorgusuna göre menü öğelerini bulan yardımcı fonksiyon
 export const searchMenuItems = (query: string): MenuItem[] => {
   if (!query.trim()) return [];
   
